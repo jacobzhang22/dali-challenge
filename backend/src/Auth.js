@@ -1,86 +1,42 @@
 require("dotenv").config();
 const fs = require("fs").promises;
 const path = require("path");
-const process = require("process");
 const { google } = require("googleapis");
-const express = require("express");
 
+// Load environment variables
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
-
-// Gmail API scope for full mailbox access
 const SCOPES = ["https://mail.google.com/"];
 
-// Where we store the token locally
+// Define token storage paths
 const TOKEN_PATH = path.join(process.cwd(), "token.json");
 
-/**
- * Prompts user for a new token if none exists.
- * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- */
-async function getNewToken(oAuth2Client) {
-  const app = express();
+// ⚡️ Production Setup: Load token from Heroku ENV variable
+async function loadToken() {
+  if (process.env.TOKEN_JSON_BASE64) {
+    try {
+      const decodedToken = Buffer.from(
+        process.env.TOKEN_JSON_BASE64,
+        "base64"
+      ).toString("utf8");
 
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: SCOPES,
-  });
+      // Save token locally for debugging purposes
+      await fs.writeFile(TOKEN_PATH, decodedToken);
+      console.log("✅ Decoded token.json from Heroku environment variable");
 
-  console.log("👉 Authorize this app by visiting this url:", authUrl);
-
-  // Dynamically import 'open' to handle ESM usage
-  try {
-    const open = (await import("open")).default;
-    await open(authUrl);
-  } catch (err) {
-    console.error(
-      "❌ Failed to open the browser automatically. Please copy and paste the URL into your browser."
-    );
+      return JSON.parse(decodedToken);
+    } catch (err) {
+      console.error("❌ Error decoding token:", err);
+      throw err;
+    }
+  } else {
+    throw new Error("❌ No token found in Heroku environment!");
   }
-
-  return new Promise((resolve, reject) => {
-    // Define the OAuth callback endpoint
-    app.get("/oauth2callback", async (req, res) => {
-      const code = req.query.code;
-      if (!code) {
-        res.send("❌ No code found in query parameters.");
-        return reject("No code found");
-      }
-      try {
-        const { tokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(tokens);
-
-        // Save token to disk for subsequent script runs
-        await fs.writeFile(TOKEN_PATH, JSON.stringify(tokens));
-        res.send("✅ Authentication successful! You can close this window.");
-        console.log("🔐 Token stored to", TOKEN_PATH);
-
-        resolve(oAuth2Client);
-      } catch (err) {
-        console.error("❌ Error retrieving access token:", err);
-        res.send("❌ Error retrieving access token.");
-        reject(err);
-      } finally {
-        // Gracefully shut down the server after a second
-        setTimeout(() => {
-          process.exit(0);
-        }, 1000);
-      }
-    });
-
-    const PORT = 3000;
-    app.listen(PORT, () => {
-      console.log(
-        `🖥️  Server started on port ${PORT}. Waiting for OAuth callback...`
-      );
-    });
-  });
 }
 
 /**
- * Attempts to load existing token. If none found, triggers the OAuth flow.
- * @returns {Promise<google.auth.OAuth2>} An authorized OAuth2 client.
+ * Loads existing OAuth token from Heroku ENV or local file.
  */
 async function authorize() {
   const oAuth2Client = new google.auth.OAuth2(
@@ -89,54 +45,16 @@ async function authorize() {
     REDIRECT_URI
   );
 
-  // Try loading an existing token from disk
   try {
-    const token = JSON.parse(await fs.readFile(TOKEN_PATH, "utf8"));
+    const token = await loadToken();
     oAuth2Client.setCredentials(token);
-    console.log("✅ Existing token loaded.");
+    console.log("✅ Existing token loaded from Heroku.");
     return oAuth2Client;
   } catch (err) {
-    // No token found → run the getNewToken flow
-    console.log("⚠️  No existing token found. Initiating new token request...");
-    return await getNewToken(oAuth2Client);
+    console.error("❌ Failed to load authentication token:", err);
+    process.exit(1); // Exit if token cannot be loaded
   }
 }
 
-/**
- * Example function: lists labels in the user's Gmail account.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-async function listLabels(auth) {
-  const gmail = google.gmail({ version: "v1", auth });
-  const res = await gmail.users.labels.list({
-    userId: "me",
-  });
-  const labels = res.data.labels;
-  if (!labels || labels.length === 0) {
-    console.log("📭 No labels found.");
-    return;
-  }
-  console.log("📋 Labels:");
-  labels.forEach((label) => {
-    console.log(`- ${label.name}`);
-  });
-}
-
-// Export functions so other modules can import them
-module.exports = {
-  authorize,
-  listLabels,
-};
-
-// If the script is invoked directly (e.g., `node src/auth.js`),
-// automatically run `authorize()`.
-if (require.main === module) {
-  authorize()
-    .then((auth) => {
-      // Optional: call listLabels(auth) here, or leave it commented out
-      // listLabels(auth);
-    })
-    .catch((error) => {
-      console.error("❌ Authorization failed:", error);
-    });
-}
+// Export the function so it can be used in other files
+module.exports = { authorize };
