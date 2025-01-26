@@ -1,4 +1,5 @@
 # **Dartmouth ListServ Email Filter App**
+**DALI Challenge - Jacob Zhang**
 
 ## Project Description  
 This application automatically archives unwanted emails from Dartmouth’s Listserv based on a user-defined blacklist. Since Gmail does not allow direct filtering for Listserv emails (as they originate from the Listserv and not the individual club email), this project provides a workaround. Users can modify their blacklist via the frontend interface, and the backend runs every minute to archive all emails from blacklisted senders.  
