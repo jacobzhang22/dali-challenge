@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { authorize } = require("../src/auth"); // Import authorize function
+const { authorize } = require("./Auth");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
