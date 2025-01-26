@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const { authorize } = require("../src/auth"); // Import authorize function
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,38 +22,39 @@ app.use("/api/user-preferences", userRoutes);
 const { runScript } = require("../src/archiveBannedEmails");
 
 // Define the interval for running the email processing script
-const INTERVAL_MS = 60 * 1000; // 1 minutes
+const INTERVAL_MS = 60 * 1000; // 1 minute
 
 // Function to start the email processing
-function startEmailProcessing() {
-  // Run the script once immediately
-  runScript()
-    .then(() => {
-      console.log("✅ Initial email processing completed.");
-    })
-    .catch((error) => {
-      console.error("❌ Error during initial email processing:", error.message);
-    });
+async function startEmailProcessing() {
+  try {
+    const auth = await authorize(); // Ensure OAuth authorization before processing emails
+    console.log("🔑 OAuth authorization successful.");
 
-  // Schedule the email processing to run at defined intervals
-  setInterval(() => {
-    runScript()
-      .then(() => {
+    // Run the script once immediately
+    await runScript(auth);
+    console.log("✅ Initial email processing completed.");
+
+    // Schedule the email processing to run at defined intervals
+    setInterval(async () => {
+      try {
+        await runScript(auth);
         console.log("✅ Scheduled email processing completed.");
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error(
           "❌ Error during scheduled email processing:",
           error.message
         );
-      });
-  }, INTERVAL_MS);
+      }
+    }, INTERVAL_MS);
+  } catch (error) {
+    console.error("❌ OAuth authorization failed:", error);
+    process.exit(1); // Exit the app if authorization fails
+  }
 }
 
-// Start the email processing
-startEmailProcessing();
-
-// Start the Express server
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+// Start OAuth authorization and email processing, then start the Express server
+startEmailProcessing().then(() => {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on http://localhost:${PORT}`);
+  });
 });
