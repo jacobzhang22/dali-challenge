@@ -1,0 +1,156 @@
+:root {
+  --dartmouth-green: #046a38;
+  --dartmouth-dark-green: #034f2b;
+  --dartmouth-white: #ffffff;
+  --dartmouth-gray: #f8f8f8;
+  --dartmouth-dark-gray: #e0e0e0;
+  --dartmouth-black: #1c1c1c;
+  --accent-blue: #008cba;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  background-color: var(--dartmouth-gray);
+  color: var(--dartmouth-black);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  background: var(--dartmouth-white);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: bold;
+  color: var(--dartmouth-green);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--dartmouth-black);
+  margin-bottom: 15px;
+}
+
+.search-bar {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin: 10px auto;
+  border: 2px solid var(--dartmouth-green);
+  border-radius: 5px;
+  font-size: 16px;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+  border-color: var(--accent-blue);
+  outline: none;
+}
+
+.club-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--dartmouth-green);
+  border-radius: 5px;
+  background: var(--dartmouth-gray);
+}
+
+.club-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  font-size: 16px;
+  background: var(--dartmouth-white);
+  border: 1px solid var(--dartmouth-dark-gray);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.club-item:hover {
+  background: var(--accent-blue);
+  color: var(--dartmouth-white);
+  transform: scale(1.02);
+}
+
+.club-item input {
+  margin-right: 10px;
+}
+
+.no-results {
+  font-size: 16px;
+  color: var(--dartmouth-black);
+  font-weight: bold;
+}
+
+.save-button {
+  background: var(--dartmouth-green);
+  color: var(--dartmouth-white);
+  border: none;
+  padding: 12px 15px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+  border-radius: 5px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.save-button:hover {
+  background: var(--dartmouth-dark-green);
+  color: var(--dartmouth-white);
+  transform: scale(1.03);
+}
+
+.club-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.club-grid::-webkit-scrollbar-track {
+  background: var(--dartmouth-gray);
+  border-radius: 10px;
+}
+
+.club-grid::-webkit-scrollbar-thumb {
+  background: var(--dartmouth-green);
+  border-radius: 10px;
+}
+
+.club-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 95%;
+  }
+
+  .club-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .search-bar {
+    font-size: 14px;
+  }
+
+  .save-button {
+    font-size: 14px;
+    padding: 10px;
+  }
+}
