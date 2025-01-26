@@ -4,13 +4,17 @@ const admin = require("firebase-admin");
 // local
 //const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-// prod
-// heroku sucks and needs to convert environment variable to base64 because its too long
-const serviceAccount = JSON.parse(
-  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString(
-    "utf8"
-  )
-);
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(
+    Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString(
+      "utf8"
+    )
+  );
+} catch (error) {
+  console.error("❌ Error decoding FIREBASE_SERVICE_ACCOUNT_BASE64:", error);
+  process.exit(1); // Stop execution if parsing fails
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
